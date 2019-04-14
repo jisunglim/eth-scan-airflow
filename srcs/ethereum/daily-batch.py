@@ -8,25 +8,23 @@ from pyspark.sql import SQLContext
 
 #%%
 sc = pyspark.SparkContext()
-sc._jsc.hadoopConfiguration().setInt("mapred.max.split.size", 10000000)
 
 # get Hadoop configurations from Google Cloud Dataproc
 project_id = sc._jsc.hadoopConfiguration().get('fs.gs.project.id')
 bucket_id = sc._jsc.hadoopConfiguration().get('fs.gs.system.bucket')
 
 # set input directory
-input_directory = 'gs://{}/hadoop/tmp/bigquery/pyspark_input'.format(bucket_id)
+input_directory = 'gs://{}/hadoop/balance/daily/pyspark_input'.format(bucket_id)
 
 # input bq dataset info
-bq_input_project_id = 'gx-project-190412'
+bq_input_project_id = project_id
 bq_input_dataset_id = 'gx_dataset'
-bq_input_table_id = 'transactions_full_temp'
+bq_input_table_id = 'balances'
 
 # output bq table info
 bq_output_project_id = project_id
 bq_output_dataset_id = 'gx_dataset'
 bq_output_table_id = 'balances'
-
 
 # RDD config input
 conf = {
@@ -38,7 +36,6 @@ conf = {
     'mapred.bq.input.dataset.id': bq_input_dataset_id,
     'mapred.bq.input.table.id': bq_input_table_id,
 }
-
 
 # Load data in from BigQuery.
 table_data = sc.newAPIHadoopRDD(
@@ -52,16 +49,16 @@ pprint.pprint('Number of partitions: {}'.format(table_data.getNumPartitions()))
 # Perform word count.
 balances = table_data \
         .map(lambda record: json.loads(record[1])) \
-        .map(lambda x: (x['address'], int(x['value']))) \
-        .reduceByKey(lambda bal1, bal2: bal1+bal2) \
-        .map(lambda x: (x[0], (1.0*x[1])/(10**18)))
-
+        .map(lambda x: (x['address'], int(x['balance']))) \
+        .reduceByKey(lambda bal1, bal2: bal1+bal2)
+# .map(lambda x: (x[0], (1.0*x[1])/(10**18)))
 
 # Display 10 results.
 pprint.pprint(balances.take(5))
 
 # # Stage data formatted as newline-delimited JSON in Cloud Storage.
-output_directory = 'gs://{}/hadoop/tmp/bigquery/pyspark_output'.format(bucket_id)
+output_directory = 'gs://{}/hadoop/balance/daily/pyspark_output'.format(
+    bucket_id)
 output_files = output_directory + '/part-*'
 
 sql_context = SQLContext(sc)
@@ -76,7 +73,7 @@ subprocess.check_call(
     'bq load --source_format CSV '
     '--replace '
     '--autodetect '
-    '{dataset}.{table} {files} address:STRING,balance:FLOAT'.format(
+    '{dataset}.{table} {files} address:STRING,balance:NUMERIC'.format(
         dataset=bq_output_dataset_id,
         table=bq_output_table_id,
         files=output_files).split())

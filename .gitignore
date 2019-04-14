@@ -1,1 +1,4 @@
 .keystore/
+*.sh
+temp/
+.vscode/
