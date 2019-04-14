@@ -7,13 +7,8 @@
 
 ## 2. Data Pipeline  Architecture
 
-- ...
+- [Airflow](http://35.221.108.101:8080/admin/)
 
+## 3. HOW To Run
 
-## 3. TODO
-
-- daily batch 작성하기 (bq --fetch--> bq_temp --distinct--> gcs --insert--> mongoDB --> groupby)
-    1. `ethereum_blockchain --> bq_temp`
-    2. 
-- daily batch airflow에 올리기
-- full batch 마지막 부분 mongoDB에 넣는 걸로 수정하기
+1. Download python
