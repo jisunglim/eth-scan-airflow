@@ -20,26 +20,22 @@ job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
 query_job = bq_client.query(
     """
     SELECT 
-        address, 
-        SUM(value) as daily_balance_change 
+        from_address AS address, 
+        (-1) * (value) AS value 
     FROM 
-        (SELECT 
-            from_address AS address, 
-            (-1) * (value) AS value 
-        FROM 
-            `bigquery-public-data.ethereum_blockchain.transactions` 
-        WHERE 
-            block_timestamp < '2019-04-01 00:00:00' 
-        UNION ALL 
-        SELECT 
-            to_address AS address, 
-            value AS value 
-        FROM 
-            `bigquery-public-data.ethereum_blockchain.transactions` 
-        WHERE 
-            block_timestamp < '2019-04-01 00:00:00')
-    GROUP BY 
-        address;
+        `bigquery-public-data.ethereum_blockchain.transactions` 
+    WHERE 
+        block_timestamp < '2019-04-01 00:00:00' 
+    UNION ALL 
+    SELECT 
+        to_address AS address, 
+        value AS value 
+    FROM 
+        `bigquery-public-data.ethereum_blockchain.transactions` 
+    WHERE 
+        to_address IS NOT NULL 
+    AND 
+        block_timestamp < '2019-04-01 00:00:00'
     """,
     location='US',  # Location must match dataset
     job_config=job_config)

@@ -8,6 +8,7 @@ from pyspark.sql import SQLContext
 
 #%%
 sc = pyspark.SparkContext()
+sc._jsc.hadoopConfiguration().setInt("mapred.max.split.size", 10000000)
 
 # get Hadoop configurations from Google Cloud Dataproc
 project_id = sc._jsc.hadoopConfiguration().get('fs.gs.project.id')
@@ -35,7 +36,7 @@ conf = {
     'mapred.bq.temp.gcs.path': input_directory,
     'mapred.bq.input.project.id': bq_input_project_id,
     'mapred.bq.input.dataset.id': bq_input_dataset_id,
-    'mapred.bq.input.table.id': bq_input_table_id
+    'mapred.bq.input.table.id': bq_input_table_id,
 }
 
 
@@ -46,13 +47,15 @@ table_data = sc.newAPIHadoopRDD(
     'com.google.gson.JsonObject',
     conf=conf)
 
+pprint.pprint('Number of partitions: {}'.format(table_data.getNumPartitions()))
+
 # Perform word count.
-balances = (
-    table_data
-        .map(lambda record: json.loads(record[1]))
-        .reduceByKey(lambda bal1, bal2: bal1+bal2)
+balances = table_data \
+        .map(lambda record: json.loads(record[1])) \
+        .map(lambda x: (x['address'], int(x['value']))) \
+        .reduceByKey(lambda bal1, bal2: bal1+bal2) \
         .map(lambda x: (x[0], (1.0*x[1])/(10**18)))
-)
+
 
 # Display 10 results.
 pprint.pprint(balances.take(5))
@@ -62,20 +65,21 @@ output_directory = 'gs://{}/hadoop/tmp/bigquery/pyspark_output'.format(bucket_id
 output_files = output_directory + '/part-*'
 
 sql_context = SQLContext(sc)
-(   
-    balances
-        .toDF(['address', 'balance'])
-        .write.format('csv')
-        .save(output_directory))
+
+balances \
+    .toDF(['address', 'balance']) \
+    .write.format('csv') \
+    .save(output_directory)
 
 # Shell out to bq CLI to perform BigQuery import.
-subprocess.check_call('bq load --source_format CSV '
-                      '--replace '
-                      '--autodetect '
-                      '{dataset}.{table} {files} address:STRING,balance:FLOAT'.format(
-                          dataset=bq_output_dataset_id,
-                          table=bq_output_table_id,
-                          files=output_files).split())
+subprocess.check_call(
+    'bq load --source_format CSV '
+    '--replace '
+    '--autodetect '
+    '{dataset}.{table} {files} address:STRING,balance:FLOAT'.format(
+        dataset=bq_output_dataset_id,
+        table=bq_output_table_id,
+        files=output_files).split())
 
 # Manually clean up the staging_directories, otherwise BigQuery
 # files will remain indefinitely.
