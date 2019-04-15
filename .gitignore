@@ -2,3 +2,7 @@
 srcs/**/*.sh
 temp/
 .vscode/
+*.cfg
+**/__pycache__
+*.db
+logs/
