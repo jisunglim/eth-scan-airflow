@@ -78,25 +78,6 @@ erc721 = json.loads(mockup_erc721)
 df = df.append(erc721, sort=False)
 
 df
-#%%
-address = '0x1e411ae37f558c5e8e6567bb5ba0016e6bb6bd23'
-
-def get_erc20(address):
-    subprocess.check_output(
-        'bq query --format "json" --use_legacy_sql=false '
-        'SELECT '
-        'tokens.symbol AS code, '
-        'tokens.name AS name, '
-        'erc20.balance AS balance_or_id, '
-        'tokens.decimals as decimal '
-        'FROM `gx-project-190412.gx_dataset.erc20` AS erc20 '
-        'INNER JOIN `bigquery-public-data.ethereum_blockchain.tokens` AS tokens '
-        'ON tokens.address = erc20.token_address '
-        'WHERE erc20.address="{address}" '.format(address=address)
-    )
-
-get_erc20(address)
-
 
 #%%
 app = dash.Dash()
