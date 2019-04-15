@@ -1,22 +1,23 @@
 from google.cloud import bigquery
 import sys
 
+# CLI input
 if len(sys.argv) != 3:
-    raise Exception("Exactly 2 arguments are required: <inputUri> <outputUri>")
+    raise Exception("Exactly 2 arguments are required: <start_date> <end_date>")
 
 start = sys.argv[1]
 end = sys.argv[2]
 
-
+# create client
 client = bigquery.Client()
 
-# set test db
+# set db
 dataset_ref = client.dataset('gx_dataset')
 dataset = bigquery.Dataset(dataset_ref)
 
-# Write query results to a new table
+# Append query results to the eth balance table
 job_config = bigquery.QueryJobConfig()
-table_ref = dataset.table("balances")
+table_ref = dataset.table("eth")
 job_config.destination = table_ref
 job_config.create_disposition = bigquery.CreateDisposition.CREATE_NEVER
 job_config.write_disposition = bigquery.WriteDisposition.WRITE_APPEND

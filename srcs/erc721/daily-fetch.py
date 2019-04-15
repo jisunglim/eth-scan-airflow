@@ -1,19 +1,21 @@
 from google.cloud import bigquery
 import sys
 
+# CLI input
 if len(sys.argv) != 3:
     raise Exception("Exactly 2 arguments are required: <start_date> <end_date>")
 
 start = sys.argv[1]
 end = sys.argv[2]
 
+# create client
 client = bigquery.Client()
 
-# set test db
+# set db
 dataset_ref = client.dataset('gx_dataset')
 dataset = bigquery.Dataset(dataset_ref)
 
-# Write query results to a new table
+# Write query results to temporary table
 job_config = bigquery.QueryJobConfig()
 table_ref = dataset.table('erc721_daily_temp')
 job_config.destination = table_ref
