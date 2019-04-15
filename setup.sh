@@ -1,5 +1,3 @@
-BASEDIR=$(dirname "$0")
-
-export GOOGLE_APPLICATION_CREDENTIALS="$BASEDIR/.keystore/gx-project-admin.key.json"
-export AIRFLOW_HOMW="$BASEDIR"
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/.keystore/gx-project-admin.key.json"
+export AIRFLOW_HOME="$(pwd)"
 
