@@ -30,29 +30,27 @@ query_job = client.query(
     FROM 
         `bigquery-public-data.ethereum_blockchain.token_transfers` 
     WHERE 
-        transaction_hash 
+        block_timestamp >= "{timestamp_start}"
+    AND 
+        block_timestamp < "{timestamp_end}"
+    AND 
+        from_address 
     IN 
         (SELECT 
-            DISTINCT `hash` AS transaction_hash 
+            address 
         FROM 
-            `bigquery-public-data.ethereum_blockchain.transactions` 
+            `bigquery-public-data.ethereum_blockchain.contracts`
         WHERE 
-            receipt_contract_address IS NOT NULL 
-        AND 
-            receipt_contract_address 
-        IN 
-            (SELECT 
-                DISTINCT address 
-            FROM 
-                `bigquery-public-data.ethereum_blockchain.contracts` 
-            WHERE 
-                is_erc20 IS TRUE 
-            ) 
-        ) 
-    AND 
-        block_timestamp >= TIMESTAMP('{timestamp_start}') 
-    AND 
-        block_timestamp < TIMESTAMP('{timestamp_end}');
+            is_erc20 IS TRUE)
+    OR 
+        to_address 
+    IN 
+        (SELECT 
+            address 
+        FROM 
+            `bigquery-public-data.ethereum_blockchain.contracts`
+        WHERE 
+            is_erc20 IS TRUE)
     """.format(timestamp_start=start, timestamp_end=end),
     location='US',  # Location must match dataset
     job_config=job_config)

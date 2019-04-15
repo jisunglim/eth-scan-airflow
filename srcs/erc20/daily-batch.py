@@ -27,7 +27,7 @@ bq_input_table_id_daily = 'erc20_daily_temp'
 # output bq table info
 bq_output_project_id = project_id
 bq_output_dataset_id = 'gx_dataset'
-bq_output_table_id = 'balances'
+bq_output_table_id = 'erc20'
 
 # RDD config input
 full_conf = {
