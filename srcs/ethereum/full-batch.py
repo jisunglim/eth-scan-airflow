@@ -52,8 +52,9 @@ pprint.pprint('Number of partitions: {}'.format(rdd.getNumPartitions()))
 
 # Process
 rdd_result = rdd.map(lambda record: json.loads(record[1])) \
-        .map(lambda x: (x['address'], int(x['value']))) \
-        .reduceByKey(lambda bal1, bal2: bal1+bal2)
+        .map(lambda x: (x['address'], int(x['balance']))) \
+        .reduceByKey(lambda x, y: x+y) \
+        .map(lambda x: (x[0], str(x[1])))
 
 # result sample logging
 pprint.pprint(rdd_result.take(5))
@@ -75,7 +76,7 @@ subprocess.check_call(
     'bq load --source_format CSV '
     '--replace '
     '--autodetect '
-    '{dataset}.{table} {files} address:STRING,balance:NUMERIC'.format(
+    '{dataset}.{table} {files} address:STRING,balance:STRING'.format(
         dataset=bq_output_dataset_id,
         table=bq_output_table_id,
         files=output_files).split())

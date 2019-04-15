@@ -24,7 +24,7 @@ query_job = client.query(
     """
     SELECT 
         from_address AS address, 
-        (-1) * (value) AS value 
+        (-1) * (value) AS balance 
     FROM 
         `bigquery-public-data.ethereum_blockchain.transactions` 
     WHERE 
@@ -34,7 +34,7 @@ query_job = client.query(
     UNION ALL 
     SELECT 
         to_address AS address, 
-        value AS value 
+        value AS balance 
     FROM 
         `bigquery-public-data.ethereum_blockchain.transactions` 
     WHERE 
